@@ -1,0 +1,721 @@
+---
+const postModules = import.meta.glob('./posts/*.md', { eager: true });
+
+const posts = Object.values(postModules)
+  .map((mod) => ({
+    url: mod.url,
+    title: mod.frontmatter?.title ?? '제목 없음',
+    date: mod.frontmatter?.date ?? '날짜 없음',
+    description: mod.frontmatter?.description ?? '',
+    category: mod.frontmatter?.category ?? '기타',
+    tags: Array.isArray(mod.frontmatter?.tags) ? mod.frontmatter.tags : []
+  }))
+  .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+const categoryMap = posts.reduce((acc, post) => {
+  acc[post.category] = (acc[post.category] ?? 0) + 1;
+  return acc;
+}, {});
+const categories = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]);
+const categoryOrder = categories.map(([name]) => name);
+const groupedPosts = categoryOrder.map((name) => ({
+  name,
+  count: categoryMap[name],
+  posts: posts.filter((post) => post.category === name)
+}));
+const allTags = [...new Set(posts.flatMap((post) => post.tags))].sort((a, b) => a.localeCompare(b));
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>siruharu blog</title>
+    <style>
+      :root {
+        --bg-top: #f8f3e8;
+        --bg-bottom: #fffdf9;
+        --ink: #1e2937;
+        --ink-muted: #5a6472;
+        --line: #d6cfc1;
+        --accent: #1b7a6e;
+        --accent-soft: #e6f4f1;
+        --card: #fffdfa;
+        --warm: #bf6d40;
+        --tabby: #eadfca;
+        color-scheme: light;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        background:
+          radial-gradient(circle at 10% 10%, #fff4d8 0%, transparent 34%),
+          radial-gradient(circle at 90% 4%, #e5f5ef 0%, transparent 28%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 52%);
+        color: var(--ink);
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 52px 20px 72px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: linear-gradient(135deg, #fffcf5 0%, #fbf7ee 40%, #f2fbf8 100%);
+        padding: 26px 24px;
+        box-shadow: 0 14px 32px rgba(89, 70, 25, 0.08);
+        animation: rise 0.7s ease both;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .hero-collage {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .hero-collage img {
+        position: absolute;
+        width: 124px;
+        height: 124px;
+        object-fit: cover;
+        border-radius: 18px;
+        border: 1px solid #e3dccf;
+        opacity: 0.16;
+        filter: saturate(0.95);
+      }
+
+      .hero-collage .siru-bg {
+        right: 132px;
+        top: -18px;
+        transform: rotate(-10deg);
+      }
+
+      .hero-collage .haru-bg {
+        right: 22px;
+        top: 24px;
+        transform: rotate(8deg);
+      }
+
+      .eyebrow {
+        margin: 0;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 8px 0 10px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.2;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--ink-muted);
+        max-width: 68ch;
+      }
+
+      .layout {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 290px minmax(0, 1fr);
+        gap: 16px;
+      }
+
+      .sidebar {
+        align-self: start;
+        position: sticky;
+        top: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fffefb;
+        padding: 16px;
+        box-shadow: 0 10px 28px rgba(56, 43, 14, 0.06);
+      }
+
+      .widget + .widget {
+        margin-top: 16px;
+      }
+
+      .widget-title {
+        margin: 0 0 10px;
+        font-size: 0.84rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+      }
+
+      .cat-cards {
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+        list-style: none;
+      }
+
+      .cat-card {
+        display: grid;
+        grid-template-columns: 38px 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fffaf0 0%, #fffeff 100%);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .cat-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 16px rgba(51, 41, 18, 0.07);
+      }
+
+      .cat-card.siru {
+        background: linear-gradient(180deg, #fff8ee 0%, #fffdf9 100%);
+      }
+
+      .cat-card.haru {
+        background: linear-gradient(180deg, #f5fcf9 0%, #fffefe 100%);
+      }
+
+      .cat-card img {
+        width: 38px;
+        height: 38px;
+        object-fit: cover;
+        border-radius: 999px;
+        border: 1px solid #d9d0bf;
+        box-shadow: 0 0 0 2px #fff, 0 5px 10px rgba(32, 37, 44, 0.12);
+        filter: saturate(1.05) contrast(1.04);
+      }
+
+      .cat-card.siru img {
+        border-color: #d7bfa4;
+      }
+
+      .cat-card.haru img {
+        border-color: #b8d6cd;
+      }
+
+      .cat-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .cat-note {
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+      }
+
+      .search-input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font: inherit;
+        color: var(--ink);
+        background: #fffeff;
+      }
+
+      .search-input:focus {
+        outline: 2px solid color-mix(in srgb, var(--accent) 28%, white);
+        outline-offset: 1px;
+      }
+
+      .filter-list {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .filter-btn {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 11px;
+        font: inherit;
+        cursor: pointer;
+        background: #fffefb;
+        color: var(--ink);
+      }
+
+      .filter-btn.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: #18584f;
+        font-weight: 700;
+      }
+
+      .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag-btn {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 9px;
+        font: inherit;
+        font-size: 0.8rem;
+        cursor: pointer;
+        background: #fffefc;
+        color: #526072;
+      }
+
+      .tag-btn.active {
+        border-color: #8bc3b7;
+        background: #e9f5f2;
+        color: #245f54;
+        font-weight: 700;
+      }
+
+      .content-head {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .count {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-muted);
+      }
+
+      .active-filter {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #35655a;
+      }
+
+      .groups {
+        display: grid;
+        gap: 12px;
+      }
+
+      .group {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fffefb;
+        overflow: hidden;
+      }
+
+      .group[open] {
+        box-shadow: 0 10px 24px rgba(34, 39, 46, 0.05);
+      }
+
+      .group-head {
+        cursor: pointer;
+        list-style: none;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #ebe6dc;
+        font-weight: 700;
+      }
+
+      .group-head::-webkit-details-marker {
+        display: none;
+      }
+
+      .group-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .group-title::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--warm);
+      }
+
+      .group-count {
+        font-size: 0.84rem;
+        color: var(--ink-muted);
+      }
+
+      .post-list {
+        list-style: none;
+        margin: 0;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+      }
+
+      .post-item {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 8px 20px rgba(29, 32, 36, 0.05);
+        animation: rise 0.5s ease both;
+      }
+
+      .post-link {
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 1.07rem;
+        font-weight: 700;
+      }
+
+      .post-summary {
+        margin: 8px 0 0;
+        color: var(--ink-muted);
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .badge {
+        font-size: 0.76rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 4px 8px;
+        color: #526072;
+        background: #fff;
+      }
+
+      button.badge {
+        cursor: pointer;
+      }
+
+      button.badge.active {
+        border-color: #8bc3b7;
+        background: #e9f5f2;
+        color: #245f54;
+        font-weight: 700;
+      }
+
+      .date {
+        display: block;
+        margin-top: 12px;
+        color: var(--warm);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .empty {
+        display: none;
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        padding: 20px;
+        color: var(--ink-muted);
+        background: #fffefc;
+      }
+
+      .paws {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .paw {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #d9cfbb;
+        box-shadow:
+          9px -5px 0 -4px #d9cfbb,
+          -9px -5px 0 -4px #d9cfbb,
+          0 -9px 0 -4px #d9cfbb;
+      }
+
+      .paw.haru {
+        background: #cce5dd;
+        box-shadow:
+          9px -5px 0 -4px #cce5dd,
+          -9px -5px 0 -4px #cce5dd,
+          0 -9px 0 -4px #cce5dd;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          padding-top: 34px;
+        }
+
+        .hero {
+          padding: 20px 16px;
+        }
+
+        .hero-collage img {
+          width: 90px;
+          height: 90px;
+          opacity: 0.13;
+        }
+
+        .hero-collage .siru-bg {
+          right: 84px;
+          top: -10px;
+        }
+
+        .hero-collage .haru-bg {
+          right: 10px;
+          top: 16px;
+        }
+
+        .post-list {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="hero">
+        <div class="hero-content">
+          <p class="eyebrow">Journal</p>
+          <h1>siruharu blog</h1>
+          <p class="subtitle">시루와 하루와 함께 사는 일상/개발 기록.</p>
+          <div class="paws"><span class="paw"></span><span class="paw haru"></span></div>
+        </div>
+        <div class="hero-collage" aria-hidden="true">
+          <img class="siru-bg" src="/siru.png" alt="" />
+          <img class="haru-bg" src="/haru.png" alt="" />
+        </div>
+      </section>
+
+      <section class="layout">
+        <aside class="sidebar">
+          <div class="widget">
+            <h2 class="widget-title">Cats</h2>
+            <ul class="cat-cards">
+              <li class="cat-card siru">
+                <img src="/siru.png" alt="Siru avatar" />
+                <div>
+                  <div class="cat-name">Siru</div>
+                  <div class="cat-note">활동량 높은 에너지 담당</div>
+                </div>
+              </li>
+              <li class="cat-card haru">
+                <img src="/haru.png" alt="Haru avatar" />
+                <div>
+                  <div class="cat-name">Haru</div>
+                  <div class="cat-note">호기심 많은 관찰자</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="widget">
+            <h2 class="widget-title">Search</h2>
+            <input id="searchInput" class="search-input" type="search" placeholder="제목, 설명, 태그 검색" />
+          </div>
+
+          <div class="widget">
+            <h2 class="widget-title">Category</h2>
+            <ul class="filter-list">
+              <li><button class="filter-btn category-btn active" type="button" data-category="all">전체 ({posts.length})</button></li>
+              {
+                categories.map(([name, count]) => (
+                  <li><button class="filter-btn category-btn" type="button" data-category={name}>{name} ({count})</button></li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div class="widget">
+            <h2 class="widget-title">Tags</h2>
+            <div class="tag-cloud">
+              <button class="tag-btn active" type="button" data-tag="all">#all</button>
+              {allTags.map((tag) => <button class="tag-btn" type="button" data-tag={tag}>#{tag}</button>)}
+            </div>
+          </div>
+        </aside>
+
+        <section>
+          <div class="content-head">
+            <p class="count"><span id="visibleCount">{posts.length}</span>개의 글</p>
+            <p id="activeFilter" class="active-filter">필터: 전체</p>
+          </div>
+
+          <div class="groups" id="groupList">
+            {
+              groupedPosts.map((group) => (
+                <details class="group" data-group={group.name} open>
+                  <summary class="group-head">
+                    <span class="group-title">{group.name}</span>
+                    <span class="group-count"><span class="group-visible-count">{group.count}</span> / {group.count}</span>
+                  </summary>
+                  <ul class="post-list">
+                    {
+                      group.posts.map((post) => (
+                        <li
+                          class="post-item"
+                          data-title={post.title.toLowerCase()}
+                          data-description={post.description.toLowerCase()}
+                          data-category={post.category}
+                          data-tags={post.tags.join(' ').toLowerCase()}
+                        >
+                          <a class="post-link" href={post.url}>{post.title}</a>
+                          {post.description && <p class="post-summary">{post.description}</p>}
+                          <div class="meta-row">
+                            <span class="badge">{post.category}</span>
+                            {post.tags.map((tag) => <button class="badge tag-inline" type="button" data-tag={tag}>#{tag}</button>)}
+                          </div>
+                          <span class="date">{post.date}</span>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </details>
+              ))
+            }
+          </div>
+
+          <p id="emptyState" class="empty">조건에 맞는 글이 없습니다. 검색어를 줄이거나 다른 필터를 선택해 보세요.</p>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const searchInput = document.getElementById('searchInput');
+      const categoryButtons = [...document.querySelectorAll('.category-btn')];
+      const tagButtons = [...document.querySelectorAll('.tag-btn')];
+      const inlineTagButtons = [...document.querySelectorAll('.tag-inline')];
+      const postItems = [...document.querySelectorAll('.post-item')];
+      const groupEls = [...document.querySelectorAll('.group')];
+      const visibleCount = document.getElementById('visibleCount');
+      const activeFilter = document.getElementById('activeFilter');
+      const emptyState = document.getElementById('emptyState');
+
+      let activeCategory = 'all';
+      let activeTag = 'all';
+
+      const setActiveCategoryButton = () => {
+        categoryButtons.forEach((btn) => {
+          btn.classList.toggle('active', (btn.dataset.category || 'all') === activeCategory);
+        });
+      };
+
+      const setActiveTagButton = () => {
+        tagButtons.forEach((btn) => {
+          btn.classList.toggle('active', (btn.dataset.tag || 'all') === activeTag);
+        });
+
+        inlineTagButtons.forEach((btn) => {
+          btn.classList.toggle('active', (btn.dataset.tag || 'all') === activeTag && activeTag !== 'all');
+        });
+      };
+
+      const updateActiveFilterText = () => {
+        const parts = [];
+        if (activeCategory !== 'all') parts.push(`카테고리: ${activeCategory}`);
+        if (activeTag !== 'all') parts.push(`태그: #${activeTag}`);
+        const q = (searchInput?.value || '').trim();
+        if (q) parts.push(`검색: ${q}`);
+        activeFilter.textContent = `필터: ${parts.length ? parts.join(' / ') : '전체'}`;
+      };
+
+      const applyFilters = () => {
+        const q = (searchInput?.value || '').trim().toLowerCase();
+        let shown = 0;
+
+        postItems.forEach((item) => {
+          const title = item.dataset.title || '';
+          const description = item.dataset.description || '';
+          const tags = (item.dataset.tags || '').split(' ').filter(Boolean);
+          const category = item.dataset.category || '';
+
+          const textMatched = !q || title.includes(q) || description.includes(q) || tags.some((tag) => tag.includes(q));
+          const categoryMatched = activeCategory === 'all' || category === activeCategory;
+          const tagMatched = activeTag === 'all' || tags.includes(activeTag.toLowerCase());
+          const visible = textMatched && categoryMatched && tagMatched;
+
+          item.style.display = visible ? '' : 'none';
+          if (visible) shown += 1;
+        });
+
+        groupEls.forEach((group) => {
+          const inGroup = [...group.querySelectorAll('.post-item')];
+          const visibleInGroup = inGroup.filter((item) => item.style.display !== 'none').length;
+          const visibleCounter = group.querySelector('.group-visible-count');
+          if (visibleCounter) visibleCounter.textContent = String(visibleInGroup);
+          group.style.display = visibleInGroup > 0 ? '' : 'none';
+        });
+
+        visibleCount.textContent = String(shown);
+        emptyState.style.display = shown === 0 ? 'block' : 'none';
+        updateActiveFilterText();
+      };
+
+      categoryButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeCategory = btn.dataset.category || 'all';
+          setActiveCategoryButton();
+          applyFilters();
+        });
+      });
+
+      tagButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeTag = btn.dataset.tag || 'all';
+          setActiveTagButton();
+          applyFilters();
+        });
+      });
+
+      inlineTagButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeTag = btn.dataset.tag || 'all';
+          setActiveTagButton();
+          applyFilters();
+        });
+      });
+
+      searchInput?.addEventListener('input', applyFilters);
+      setActiveCategoryButton();
+      setActiveTagButton();
+      applyFilters();
+    </script>
+  </body>
+</html>
