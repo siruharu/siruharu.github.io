@@ -1,0 +1,56 @@
+backend:
+  name: github
+  repo: siruharu/siruharu.github.io
+  branch: main
+  # Replace with your deployed OAuth proxy domain (required for GitHub login on GitHub Pages)
+  base_url: https://siruharu-decap-auth.siruharu-cms.workers.dev
+  auth_endpoint: auth
+
+site_url: https://siruharu.github.io
+locale: ko
+publish_mode: simple
+
+media_folder: public/uploads
+public_folder: /uploads
+
+# Enables local admin testing with `npx decap-server`
+local_backend: true
+
+collections:
+  - name: posts
+    label: Posts
+    label_singular: Post
+    folder: src/pages/posts
+    create: true
+    delete: true
+    extension: md
+    format: frontmatter
+    slug: '{{slug}}'
+    fields:
+      - label: Layout
+        name: layout
+        widget: hidden
+        default: ../../layouts/PostLayout.astro
+      - label: 제목
+        name: title
+        widget: string
+      - label: 날짜
+        name: date
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        format: YYYY-MM-DD
+      - label: 설명
+        name: description
+        widget: text
+      - label: 카테고리
+        name: category
+        widget: string
+        default: 블로그 운영
+      - label: 태그
+        name: tags
+        widget: list
+        default: []
+      - label: 본문
+        name: body
+        widget: markdown
