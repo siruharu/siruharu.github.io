@@ -98,8 +98,10 @@ export default {
         githubAuth.searchParams.set('scope', 'repo,user');
         githubAuth.searchParams.set('state', state);
 
-        return Response.redirect(githubAuth.toString(), 302, {
+        return new Response(null, {
+          status: 302,
           headers: {
+            location: githubAuth.toString(),
             'set-cookie': `${COOKIE_NAME}=${nonce}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
           }
         });
