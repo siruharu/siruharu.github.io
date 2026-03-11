@@ -166,6 +166,31 @@ const tags = Array.isArray(frontmatter?.tags) ? frontmatter.tags : [];
         font-size: 0.9rem;
       }
 
+      :global(article figure.post-image) {
+        width: 100%;
+      }
+
+      :global(article figure.post-image.center) {
+        text-align: center;
+      }
+
+      :global(article figure.post-image.center img) {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      :global(article figure.post-image.left) {
+        text-align: left;
+      }
+
+      :global(article figure.post-image.right) {
+        text-align: right;
+      }
+
+      :global(article figure.post-image.right img) {
+        margin-left: auto;
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;

@@ -54,7 +54,7 @@ collections:
       - label: 본문
         name: body
         widget: markdown
-        modes: [raw]
+        modes: [rich_text, raw]
         buttons: [bold, italic, code, link, heading-two, heading-three, quote, bulleted-list, numbered-list]
-        editor_components: [image]
-        hint: '이미지는 본문 중간에 여러 번 삽입 가능합니다. 커서를 원하는 위치에 두고 이미지 삽입을 반복하세요. 크기 조절은 <img src="/uploads/파일명.png" alt="설명" width="700" /> 형식 사용.'
+        editor_components: [image, imageFigure]
+        hint: '본문은 리치텍스트/Markdown 모두 지원합니다. + 메뉴에서 Image(기본) 또는 Image Figure(정렬/너비/캡션)로 여러 장 삽입하세요.'

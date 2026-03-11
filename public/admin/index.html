@@ -7,5 +7,66 @@
   </head>
   <body>
     <script src="https://unpkg.com/decap-cms@^3.5.0/dist/decap-cms.js"></script>
+    <script>
+      CMS.registerEditorComponent({
+        id: "imageFigure",
+        label: "Image Figure",
+        fields: [
+          { name: "src", label: "Image", widget: "image" },
+          { name: "alt", label: "Alt", widget: "string", required: false },
+          { name: "caption", label: "Caption", widget: "string", required: false },
+          {
+            name: "align",
+            label: "Align",
+            widget: "select",
+            default: "center",
+            options: [
+              { label: "Center", value: "center" },
+              { label: "Left", value: "left" },
+              { label: "Right", value: "right" }
+            ]
+          },
+          {
+            name: "width",
+            label: "Width",
+            widget: "select",
+            default: "100%",
+            options: [
+              { label: "100% (Large)", value: "100%" },
+              { label: "80% (Medium)", value: "80%" },
+              { label: "60% (Small)", value: "60%" },
+              { label: "40% (Thumb)", value: "40%" }
+            ]
+          }
+        ],
+        pattern:
+          /^<figure class="post-image (center|left|right)">\s*<img src="([^"]+)" alt="([^"]*)" style="width:\s*([^";]+);" \/>\s*(?:<figcaption>([^<]*)<\/figcaption>)?\s*<\/figure>$/m,
+        fromBlock: function (match) {
+          return {
+            align: match[1],
+            src: match[2],
+            alt: match[3],
+            width: match[4].trim(),
+            caption: match[5] || ""
+          };
+        },
+        toBlock: function (obj) {
+          const align = obj.align || "center";
+          const src = obj.src || "";
+          const alt = obj.alt || "";
+          const width = obj.width || "100%";
+          const caption = obj.caption ? `<figcaption>${obj.caption}</figcaption>` : "";
+          return `<figure class="post-image ${align}">\n  <img src="${src}" alt="${alt}" style="width: ${width};" />\n  ${caption}\n</figure>`;
+        },
+        toPreview: function (obj) {
+          const align = obj.align || "center";
+          const src = obj.src || "";
+          const alt = obj.alt || "";
+          const width = obj.width || "100%";
+          const caption = obj.caption ? `<figcaption>${obj.caption}</figcaption>` : "";
+          return `<figure class="post-image ${align}"><img src="${src}" alt="${alt}" style="width: ${width};" />${caption}</figure>`;
+        }
+      });
+    </script>
   </body>
 </html>
