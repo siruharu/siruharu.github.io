@@ -54,3 +54,4 @@ collections:
       - label: 본문
         name: body
         widget: markdown
+        hint: '이미지 크기 조절: 기본은 본문 너비에 맞춰집니다. 더 작게 넣으려면 본문에 <img src="/uploads/파일명.png" alt="설명" width="700" /> 처럼 HTML 태그를 직접 사용하세요.'

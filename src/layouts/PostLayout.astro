@@ -149,6 +149,23 @@ const tags = Array.isArray(frontmatter?.tags) ? frontmatter.tags : [];
         line-height: 1.3;
       }
 
+      :global(article img) {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        display: block;
+      }
+
+      :global(article figure) {
+        margin: 1rem 0;
+      }
+
+      :global(article figcaption) {
+        margin-top: 0.45rem;
+        color: var(--ink-muted);
+        font-size: 0.9rem;
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;
